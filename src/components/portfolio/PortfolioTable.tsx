@@ -11,11 +11,7 @@ import { useState } from "react";
 import { PortfolioRow } from "@/types/portfolio";
 import GainLossCell from "./GainLossCell";
 
-export default function PortfolioTable({
-  rows,
-}: {
-  rows: PortfolioRow[];
-}) {
+export default function PortfolioTable({ rows }: { rows: PortfolioRow[] }) {
   const [sorting, setSorting] = useState<any[]>([]);
   const [sectorFilter, setSectorFilter] = useState<string>("ALL");
 
@@ -42,10 +38,7 @@ export default function PortfolioTable({
       header: "Portfolio %",
       cell: (info) => {
         const row = info.row.original;
-        const total = rows.reduce(
-          (s, r) => s + r.investment,
-          0
-        );
+        const total = rows.reduce((s, r) => s + r.investment, 0);
         return ((row.investment / total) * 100).toFixed(2) + "%";
       },
     },
@@ -54,13 +47,15 @@ export default function PortfolioTable({
     {
       header: "Present Value",
       accessorKey: "presentValue",
+      cell: (info) => {
+        const v = info.getValue<number>();
+        return typeof v === "number" ? v.toFixed() : v ?? "";
+      },
     },
     {
       header: "Gain / Loss",
       accessorKey: "gainLoss",
-      cell: (info) => (
-        <GainLossCell value={info.getValue<number>()} />
-      ),
+      cell: (info) => <GainLossCell value={info.getValue<number>()} />,
     },
     { header: "P/E Ratio", accessorKey: "peRatio" },
     {
@@ -78,9 +73,7 @@ export default function PortfolioTable({
     getSortedRowModel: getSortedRowModel(),
   });
 
-  const sectors = Array.from(
-    new Set(rows.map((r) => r.sector))
-  );
+  const sectors = Array.from(new Set(rows.map((r) => r.sector)));
 
   return (
     <div className="space-y-4">
@@ -101,8 +94,8 @@ export default function PortfolioTable({
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto border rounded-lg">
-        <table className="min-w-full text-sm ">
+      <div className="overflow-x-auto  w3-container">
+        <table className="min-w-full text-sm w3-table-all">
           <thead className="bg-gray-100 ">
             {table.getHeaderGroups().map((hg) => (
               <tr key={hg.id}>
@@ -128,16 +121,10 @@ export default function PortfolioTable({
 
           <tbody>
             {table.getRowModel().rows.map((row) => (
-              <tr
-                key={row.id}
-                className="border-t hover:bg-gray-50"
-              >
+              <tr key={row.id} className="border-t hover:bg-gray-50">
                 {row.getVisibleCells().map((cell) => (
                   <td key={cell.id} className="p-3">
-                    {flexRender(
-                      cell.column.columnDef.cell,
-                      cell.getContext()
-                    )}
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
                 ))}
               </tr>
