@@ -1,14 +1,14 @@
 import { holdings } from "@/data/holding";
 import { EnrichedHolding } from "@/types/portfolio";
 import { getCMP } from "./yahoo.service";
-import { getFundamentals } from "./google.service";
+import { getFundamentalsFromYahoo } from "./yahoo.service";
 
 export async function buildPortfolio(): Promise<EnrichedHolding[]> {
   const result: EnrichedHolding[] = [];
 
   for (const stock of holdings) {
     const { cmp } = await getCMP(stock.symbol, stock.exchange);
-    const fundamentals = await getFundamentals(
+    const fundamentals = await getFundamentalsFromYahoo(
       stock.symbol,
       stock.exchange
     );

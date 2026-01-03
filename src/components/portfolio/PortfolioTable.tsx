@@ -4,142 +4,147 @@ import {
   ColumnDef,
   flexRender,
   getCoreRowModel,
+  getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+import { useState } from "react";
 import { PortfolioRow } from "@/types/portfolio";
 import GainLossCell from "./GainLossCell";
 
-interface Props {
+export default function PortfolioTable({
+  rows,
+}: {
   rows: PortfolioRow[];
-}
+}) {
+  const [sorting, setSorting] = useState<any[]>([]);
+  const [sectorFilter, setSectorFilter] = useState<string>("ALL");
 
-export default function PortfolioTable({ rows }: Props) {
+  const filteredRows =
+    sectorFilter === "ALL"
+      ? rows
+      : rows.filter((r) => r.sector === sectorFilter);
+
   const columns: ColumnDef<PortfolioRow>[] = [
+    { header: "Stock Name", accessorKey: "symbol" },
     {
-      header: "Stock",
-      accessorKey: "symbol",
-    },
-    {
-      header: "Exchange",
-      accessorKey: "exchange",
+      header: "Purchase Price",
+      accessorKey: "purchasePrice",
     },
     {
       header: "Qty",
       accessorKey: "quantity",
-      cell: (info) => (
-        <span className="text-right block">{info.getValue<number>()}</span>
-      ),
-    },
-    {
-      header: "Buy Price",
-      accessorKey: "purchasePrice",
-      cell: (info) => (
-        <span className="text-right block">
-          {info.getValue<number>().toFixed(2)}
-        </span>
-      ),
-    },
-    {
-      header: "CMP",
-      accessorKey: "cmp",
-      cell: (info) => (
-        <span className="text-right block">
-          {info.getValue<number>().toFixed(2)}
-        </span>
-      ),
     },
     {
       header: "Investment",
       accessorKey: "investment",
-      cell: (info) => (
-        <span className="text-right block">
-          {info.getValue<number>().toFixed(2)}
-        </span>
-      ),
     },
+    {
+      header: "Portfolio %",
+      cell: (info) => {
+        const row = info.row.original;
+        const total = rows.reduce(
+          (s, r) => s + r.investment,
+          0
+        );
+        return ((row.investment / total) * 100).toFixed(2) + "%";
+      },
+    },
+    { header: "Exchange", accessorKey: "exchange" },
+    { header: "CMP", accessorKey: "cmp" },
     {
       header: "Present Value",
       accessorKey: "presentValue",
-      cell: (info) => (
-        <span className="text-right block">
-          {info.getValue<number>().toFixed(2)}
-        </span>
-      ),
     },
     {
       header: "Gain / Loss",
       accessorKey: "gainLoss",
       cell: (info) => (
-        <div className="text-right">
-          <GainLossCell value={info.getValue<number>()} />
-        </div>
+        <GainLossCell value={info.getValue<number>()} />
       ),
     },
+    { header: "P/E Ratio", accessorKey: "peRatio" },
     {
-      header: "P/E",
-      accessorKey: "peRatio",
-      cell: (info) => (
-        <span className="text-right block">{info.getValue<string>()}</span>
-      ),
-    },
-    {
-      header: "Earnings",
+      header: "Latest Earnings",
       accessorKey: "latestEarnings",
-      cell: (info) => (
-        <span className="text-right block">
-          {info.getValue<string>()}
-        </span>
-      ),
     },
   ];
 
   const table = useReactTable({
-    data: rows,
+    data: filteredRows,
     columns,
+    state: { sorting },
+    onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
   });
 
-  return (
-    <div className="overflow-x-auto border border-gray-300 rounded-sm">
-      <table className="min-w-full text-sm border-collapse text-gray-900">
-        <thead className="bg-gray-300">
-          {table.getHeaderGroups().map((headerGroup) => (
-            <tr key={headerGroup.id}>
-              {headerGroup.headers.map((header) => (
-                <th
-                  key={header.id}
-                  className="px-4 py-2 text-left font-semibold border border-gray-300 bg-gray-100 text-gray-700"
-                >
-                  {flexRender(
-                    header.column.columnDef.header,
-                    header.getContext()
-                  )}
-                </th>
-              ))}
-            </tr>
-          ))}
-        </thead>
+  const sectors = Array.from(
+    new Set(rows.map((r) => r.sector))
+  );
 
-        <tbody className="text-gray-900">
-          {table.getRowModel().rows.map((row, index) => (
-            <tr
-              key={row.id}
-              className={`${
-                index % 2 === 0 ? "bg-white" : "bg-gray-50"
-              } hover:bg-blue-50 transition-colors`}
-            >
-              {row.getVisibleCells().map((cell) => (
-                <td key={cell.id} className="px-4 py-2 border border-gray-300 text-gray-900">
-                  {flexRender(
-                    cell.column.columnDef.cell,
-                    cell.getContext()
-                  )}
-                </td>
-              ))}
-            </tr>
+  return (
+    <div className="space-y-4">
+      {/* Filters */}
+      <div className="flex gap-4">
+        <select
+          className="border rounded px-3 py-1"
+          value={sectorFilter}
+          onChange={(e) => setSectorFilter(e.target.value)}
+        >
+          <option value="ALL">All Sectors</option>
+          {sectors.map((s) => (
+            <option key={s} value={s}>
+              {s}
+            </option>
           ))}
-        </tbody>
-      </table>
+        </select>
+      </div>
+
+      {/* Table */}
+      <div className="overflow-x-auto border rounded-lg">
+        <table className="min-w-full text-sm ">
+          <thead className="bg-gray-100 ">
+            {table.getHeaderGroups().map((hg) => (
+              <tr key={hg.id}>
+                {hg.headers.map((header) => (
+                  <th
+                    key={header.id}
+                    onClick={header.column.getToggleSortingHandler()}
+                    className="p-3 cursor-pointer select-none"
+                  >
+                    {flexRender(
+                      header.column.columnDef.header,
+                      header.getContext()
+                    )}
+                    {{
+                      asc: " 🔼",
+                      desc: " 🔽",
+                    }[header.column.getIsSorted() as string] ?? ""}
+                  </th>
+                ))}
+              </tr>
+            ))}
+          </thead>
+
+          <tbody>
+            {table.getRowModel().rows.map((row) => (
+              <tr
+                key={row.id}
+                className="border-t hover:bg-gray-50"
+              >
+                {row.getVisibleCells().map((cell) => (
+                  <td key={cell.id} className="p-3">
+                    {flexRender(
+                      cell.column.columnDef.cell,
+                      cell.getContext()
+                    )}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
