@@ -14,7 +14,7 @@ export async function getCMP(
   if (cached) return cached;
 
   const ticker = exchange === "NSE" ? `${symbol}.NS` : `${symbol}.BO`;
-  const yahooFinance = new YahooFinance();
+  const yahooFinance = new YahooFinance({ suppressNotices: ['yahooSurvey'] });
   const quote = await yahooFinance.quote(ticker);
 
   const data = {

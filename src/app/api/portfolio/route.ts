@@ -10,6 +10,8 @@ export async function GET() {
       data,
       timestamp: new Date().toISOString(),
     });
+    
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     return NextResponse.json(
       {
