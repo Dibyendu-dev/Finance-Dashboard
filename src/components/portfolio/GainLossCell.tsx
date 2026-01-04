@@ -4,7 +4,7 @@ export default function GainLossCell({ value }: { value: number }) {
   return (
     <span
       className={clsx(
-        "font-medium",
+        "font-medium text-lg",
         value >= 0 ? "text-green-600" : "text-red-600"
       )}
     >

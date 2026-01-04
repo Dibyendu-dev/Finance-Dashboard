@@ -4,22 +4,19 @@ import {
   ColumnDef,
   flexRender,
   getCoreRowModel,
-  getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { useState } from "react";
+
 import { PortfolioRow } from "@/types/portfolio";
 import GainLossCell from "./GainLossCell";
 
-export default function PortfolioTable({ rows }: { rows: PortfolioRow[] }) {
-  const [sorting, setSorting] = useState<any[]>([]);
-  const [sectorFilter, setSectorFilter] = useState<string>("ALL");
-
-  const filteredRows =
-    sectorFilter === "ALL"
-      ? rows
-      : rows.filter((r) => r.sector === sectorFilter);
-
+export default function PortfolioTable({
+  rows,
+  overallTotal,
+}: {
+  rows: PortfolioRow[];
+  overallTotal?: number;
+}) {
   const columns: ColumnDef<PortfolioRow>[] = [
     { header: "Stock Name", accessorKey: "symbol" },
     {
@@ -38,8 +35,11 @@ export default function PortfolioTable({ rows }: { rows: PortfolioRow[] }) {
       header: "Portfolio %",
       cell: (info) => {
         const row = info.row.original;
-        const total = rows.reduce((s, r) => s + r.investment, 0);
-        return ((row.investment / total) * 100).toFixed(2) + "%";
+        const total =
+          typeof overallTotal === "number"
+            ? overallTotal
+            : rows.reduce((s, r) => s + r.investment, 0);
+        return ((row.investment / (total || 1)) * 100).toFixed(2) + "%";
       },
     },
     { header: "Exchange", accessorKey: "exchange" },
@@ -65,54 +65,27 @@ export default function PortfolioTable({ rows }: { rows: PortfolioRow[] }) {
   ];
 
   const table = useReactTable({
-    data: filteredRows,
+    data: rows,
     columns,
-    state: { sorting },
-    onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
   });
-
-  const sectors = Array.from(new Set(rows.map((r) => r.sector)));
 
   return (
     <div className="space-y-4">
-      {/* Filters */}
-      <div className="flex gap-4">
-        <select
-          className="border rounded px-3 py-1"
-          value={sectorFilter}
-          onChange={(e) => setSectorFilter(e.target.value)}
-        >
-          <option value="ALL">All Sectors</option>
-          {sectors.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Table */}
       <div className="overflow-x-auto  w3-container">
         <table className="min-w-full text-sm w3-table-all">
-          <thead className="bg-gray-100 ">
-            {table.getHeaderGroups().map((hg) => (
-              <tr key={hg.id}>
-                {hg.headers.map((header) => (
+          <thead className="bg-gray-100">
+            {table.getHeaderGroups().map((headerGroup) => (
+              <tr key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
                   <th
                     key={header.id}
-                    onClick={header.column.getToggleSortingHandler()}
-                    className="p-3 cursor-pointer select-none"
+                    className="p-3 text-left font-semibold border-b"
                   >
                     {flexRender(
                       header.column.columnDef.header,
                       header.getContext()
                     )}
-                    {{
-                      asc: " 🔼",
-                      desc: " 🔽",
-                    }[header.column.getIsSorted() as string] ?? ""}
                   </th>
                 ))}
               </tr>
@@ -121,7 +94,7 @@ export default function PortfolioTable({ rows }: { rows: PortfolioRow[] }) {
 
           <tbody>
             {table.getRowModel().rows.map((row) => (
-              <tr key={row.id} className="border-t hover:bg-gray-50">
+              <tr key={row.id} className="border-b hover:bg-gray-50 transition">
                 {row.getVisibleCells().map((cell) => (
                   <td key={cell.id} className="p-3">
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
