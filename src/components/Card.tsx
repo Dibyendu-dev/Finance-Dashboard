@@ -10,6 +10,7 @@ export default function Card({
 }) {
   return (
     <div className="rounded-lg border p-4 bg-white shadow-sm">
+      
       <p className="text-sm text-gray-800">{title}</p>
       <p
         className={`text-2xl font-semibold   ${
@@ -22,6 +23,7 @@ export default function Card({
       >
         ₹ {value.toFixed(2)}
       </p>
+      
     </div>
   )
 }
