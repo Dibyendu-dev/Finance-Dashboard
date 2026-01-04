@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import YahooFinance from "yahoo-finance2";
 import { getCache, setCache } from "@/utils/cache";
 
@@ -58,7 +58,7 @@ export async function getFundamentalsFromYahoo(
     } else if (quote.summaryDetail?.trailingPE) {
       peRatio = typeof quote.summaryDetail.trailingPE === 'number'
         ? quote.summaryDetail.trailingPE.toFixed(2)
-        : quote.summaryDetail.trailingPE.toString();
+        : String(quote.summaryDetail.trailingPE);
     }
 
     // Extract Latest Earnings
@@ -71,7 +71,7 @@ export async function getFundamentalsFromYahoo(
       if (latest.actual) {
         latestEarnings = typeof latest.actual === 'number'
           ? latest.actual.toFixed(2)
-          : latest.actual.toString();
+          : String(latest.actual);
       }
     }
 
