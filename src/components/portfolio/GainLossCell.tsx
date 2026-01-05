@@ -1,14 +1,21 @@
 import clsx from "clsx";
+import React from "react";
 
-export default function GainLossCell({ value }: { value: number }) {
+ function GainLossCell({ value }: { value: number }) {
+  
+  if (typeof value !== "number") return null;
+  const isProfit = value >= 0;
+
   return (
     <span
       className={clsx(
         "font-medium text-lg",
-        value >= 0 ? "text-green-600" : "text-red-600"
+        isProfit ? "text-green-600" : "text-red-600"
       )}
     >
       {value.toFixed(2)}
     </span>
   );
 }
+
+export default React.memo(GainLossCell);

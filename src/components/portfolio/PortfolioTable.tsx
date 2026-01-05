@@ -9,6 +9,7 @@ import {
 
 import { PortfolioRow } from "@/types/portfolio";
 import GainLossCell from "./GainLossCell";
+import { useMemo } from "react";
 
 export default function PortfolioTable({
   rows,
@@ -17,55 +18,59 @@ export default function PortfolioTable({
   rows: PortfolioRow[];
   overallTotal?: number;
 }) {
-  const columns: ColumnDef<PortfolioRow>[] = [
-    { header: "Stock Name", accessorKey: "symbol" },
-    {
-      header: "Purchase Price",
-      accessorKey: "purchasePrice",
-    },
-    {
-      header: "Qty",
-      accessorKey: "quantity",
-    },
-    {
-      header: "Investment",
-      accessorKey: "investment",
-    },
-    {
-      header: "Portfolio %",
-      cell: (info) => {
-        const row = info.row.original;
-        const total =
-          typeof overallTotal === "number"
-            ? overallTotal
-            : rows.reduce((s, r) => s + r.investment, 0);
-        return ((row.investment / (total || 1)) * 100).toFixed(2) + "%";
+
+  const data = useMemo(() => rows, [rows]);
+
+  const totalInvestment = useMemo(() => {
+    return typeof(overallTotal) === "number"
+      ? overallTotal
+      : rows.reduce((sum, r) => sum + r.investment, 0);
+  }, [overallTotal, rows]);
+
+  const columns = useMemo<ColumnDef<PortfolioRow>[]>(
+    () => [
+      { header: "Stock Name", accessorKey: "symbol" },
+      { header: "Purchase Price", accessorKey: "purchasePrice" },
+      { header: "Qty", accessorKey: "quantity" },
+      { header: "Investment", accessorKey: "investment" },
+
+      {
+        header: "Portfolio %",
+        cell: (info) =>
+          (
+            (info.row.original.investment / (totalInvestment || 1)) *
+            100
+          ).toFixed(2) + "%",
       },
-    },
-    { header: "Exchange", accessorKey: "exchange" },
-    { header: "CMP", accessorKey: "cmp" },
-    {
-      header: "Present Value",
-      accessorKey: "presentValue",
-      cell: (info) => {
-        const v = info.getValue<number>();
-        return typeof v === "number" ? v.toFixed() : v ?? "";
+
+      { header: "Exchange", accessorKey: "exchange" },
+      { header: "CMP", accessorKey: "cmp" },
+
+      {
+        header: "Present Value",
+        accessorKey: "presentValue",
+        cell: (info) => {
+          const v = info.getValue<number>() ;
+          return typeof v === "number" ? v.toFixed(2) : "";
+        },
       },
-    },
-    {
-      header: "Gain / Loss",
-      accessorKey: "gainLoss",
-      cell: (info) => <GainLossCell value={info.getValue<number>()} />,
-    },
-    { header: "P/E Ratio", accessorKey: "peRatio" },
-    {
-      header: "Latest Earnings",
-      accessorKey: "latestEarnings",
-    },
-  ];
+
+      {
+        header: "Gain / Loss",
+        accessorKey: "gainLoss",
+        cell: (info) => (
+          <GainLossCell value={info.getValue<number>() } />
+        ),
+      },
+
+      { header: "P/E Ratio", accessorKey: "peRatio" },
+      { header: "Latest Earnings", accessorKey: "latestEarnings" },
+    ],
+    [totalInvestment]
+  );
 
   const table = useReactTable({
-    data: rows,
+    data,
     columns,
     getCoreRowModel: getCoreRowModel(),
   });
@@ -73,7 +78,7 @@ export default function PortfolioTable({
   return (
     <div className="space-y-4">
       <div className="overflow-x-auto  w3-container">
-        <table className="min-w-full text-sm w3-table-all">
+        <table className="min-w-full text-sm border-collapse w3-table-all">
           <thead className="bg-gray-100">
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
